@@ -5,7 +5,24 @@ import 'components/topSearch.dart';
 import 'components/swiper.dart';
 import 'components/category.dart';
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _AppState();
+}
+
+class _AppState extends State {
+  ScrollController _scrollController;
+  double bgRadiusTop = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(() {
+      print(_scrollController.offset);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusHeight = MediaQuery.of(context).padding.top;
@@ -36,7 +53,7 @@ class App extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    top: 0,
+                    top: bgRadiusTop,
                     left: 0,
                     right: 0,
                     height: statusHeight + 124,
@@ -60,9 +77,13 @@ class App extends StatelessWidget {
               ),
             ),
             Expanded(
-              flex: 1,
-              child: Body(),
-            )
+              child: ListView.builder(
+                controller: _scrollController, // 初始化传入控制器
+                itemCount: 100, // 列表元素总数
+                itemBuilder: (context, index) =>
+                    ListTile(title: Text("Index : $index")), // 列表项构造方法
+              ),
+            ),
           ],
         ),
       ),
