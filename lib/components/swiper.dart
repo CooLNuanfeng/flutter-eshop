@@ -20,8 +20,8 @@ class Swiper extends StatelessWidget {
           viewportFraction: 1,
           autoPlayInterval: Duration(seconds: 3),
           onPageChanged: (index, reason) {
-            print(index);
-            print(reason);
+            // print(index);
+            // print(reason);
           },
         ),
         items: this.swiperItems.map((url) {

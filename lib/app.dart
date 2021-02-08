@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_easyrefresh/easy_refresh.dart';
+import 'dart:convert';
 
 import 'components/refreshHeader.dart';
 import 'components/topSearch.dart';
@@ -19,13 +20,39 @@ class App extends StatefulWidget {
   State<StatefulWidget> createState() => _AppState();
 }
 
-class _AppState extends State {
+class _AppState extends State<App> with SingleTickerProviderStateMixin {
+  //底部nav globalkey
+  GlobalKey key;
+
   ScrollController _scrollController;
+
   double bgRadiusTop = 0;
+  double statusHeight;
+  bool fixedNav = false;
+
+  final tabsData = jsonDecode('''{
+    "tab": [
+      {"productCateId": 2729, "name": "空调", "tag": "悦享呼吸"},
+      {"productCateId": 2725, "name": "洗衣机", "tag": "守护洁净"},
+      {"productCateId": 2723, "name": "冰箱", "tag": "原味鲜活"},
+      {"productCateId": 2743, "name": "彩电", "tag": "视听万象"},
+      {"productCateId": 2741, "name": "热水器", "tag": "温暖到家"},
+      {"productCateId": 2742, "name": "厨房电器", "tag": "乐享美味"},
+      {"productCateId": 2726, "name": "冷柜", "tag": "冻力强劲"},
+      {"productCateId": 2973, "name": "智能产品", "tag": "科技体验"},
+      {"productCateId": 4255, "name": "生活电器", "tag": "品质生活"},
+      {"productCateId": 2774, "name": "水家电", "tag": "洁净用水"},
+      {"productCateId": 2811, "name": "家用中央空调", "tag": "舒适陪伴"}
+    ]
+  }''');
 
   @override
   void initState() {
     super.initState();
+    key = GlobalKey(debugLabel: 'btmNav');
+    print('====key=====');
+    print(key);
+    print('====key=====');
     _scrollController = ScrollController();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
@@ -40,12 +67,20 @@ class _AppState extends State {
           bgRadiusTop = 0;
         }
       });
+
+      RenderBox box = key.currentContext.findRenderObject();
+      Offset os = box.localToGlobal(Offset.zero);
+      if (os.dy < statusHeight) {
+        print('======fixed======');
+      } else {
+        print('======cancel fixed======');
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusHeight = MediaQuery.of(context).padding.top;
+    statusHeight = MediaQuery.of(context).padding.top;
     // TODO: implement build
     return LayoutBuilder(builder: (_, BoxConstraints constraints) {
       //Set the fit size (fill in the screen size of the device in the design,in dp)
@@ -101,7 +136,12 @@ class _AppState extends State {
                     },
                     child: ListView(
                       controller: _scrollController, //监听滚动
-                      children: [Body()],
+                      children: [
+                        Body(
+                          btmNavKey: key,
+                          tabNav: tabsData['tab'],
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -114,6 +154,15 @@ class _AppState extends State {
                     type: 3,
                   ),
                 ),
+                fixedNav
+                    ? Positioned(
+                        top: 50 + statusHeight,
+                        left: 0,
+                        right: 0,
+                        height: 45,
+                        child: Container(),
+                      )
+                    : Positioned(child: Container()),
               ],
             ),
           ),
@@ -130,6 +179,9 @@ class _AppState extends State {
 }
 
 class Body extends StatelessWidget {
+  final btmNavKey;
+  final tabNav;
+  Body({Key key, this.btmNavKey, this.tabNav}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -146,7 +198,10 @@ class Body extends StatelessWidget {
         NearShop(),
         CouponList(),
         FlexArea(),
-        BtmCategory(),
+        BtmCategory(
+          btmCatekey: btmNavKey,
+          tabNav: tabNav,
+        ),
       ],
     );
   }

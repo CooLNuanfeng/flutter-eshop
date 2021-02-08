@@ -26,7 +26,7 @@ class _HmsWidgetState extends State<HmsWidget> {
     count = widget.time;
     _cumputerTimer();
     _timer = Timer.periodic(Duration(milliseconds: 1000), (timer) {
-      print(timer);
+      // print(timer);
       _cumputerTimer();
     });
   }
