@@ -70,8 +70,6 @@ class RefreshHeaderWidget extends StatefulWidget {
 class _RefreshHeaderState extends State<RefreshHeaderWidget> {
   //刷新状态
   String status = '下拉刷新';
-  // 默认动画块的高度
-  double defaultHeight = 10;
   // 默认动画块的数量
   int count = 5;
 
@@ -165,6 +163,7 @@ class _LoadingItemAnimateState extends State<LoadingItemAnimate>
     with SingleTickerProviderStateMixin {
   Animation<double> animation;
   AnimationController controller;
+  final defaultHeight = 5;
 
   @override
   void initState() {
@@ -175,7 +174,9 @@ class _LoadingItemAnimateState extends State<LoadingItemAnimate>
   _initAnimation() {
     controller =
         AnimationController(duration: Duration(milliseconds: 500), vsync: this);
-    animation = Tween(begin: widget.height, end: widget.height + widget.stretch)
+    animation = Tween(
+            begin: widget.height - defaultHeight,
+            end: widget.height + widget.stretch)
         .animate(controller)
           ..addListener(() {
             setState(() {});

@@ -9,6 +9,10 @@ import 'components/category.dart';
 import 'components/middleBanner.dart';
 import 'components/kingArea.dart';
 import 'components/vipStore.dart';
+import 'components/nearShop.dart';
+import 'components/couponList.dart';
+import 'components/flexArea.dart';
+import 'components/btmCategory.dart';
 
 class App extends StatefulWidget {
   @override
@@ -139,6 +143,10 @@ class Body extends StatelessWidget {
         MiddleBannerWidget(),
         KingAreaWidget(),
         VipStoreWidget(),
+        NearShop(),
+        CouponList(),
+        FlexArea(),
+        BtmCategory(),
       ],
     );
   }
