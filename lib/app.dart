@@ -251,7 +251,8 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
     //计算_controller应该滚动的偏移量
     double offset = _fixedNavController.offset - rlOffset;
     print(offset);
-    _fixedNavController.jumpTo(offset);
+    _fixedNavController.animateTo(offset,
+        duration: Duration(milliseconds: 200), curve: Curves.linear);
   }
 
   @override

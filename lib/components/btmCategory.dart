@@ -98,7 +98,8 @@ class _TabListNavState extends State<TabListNav> {
 
     //计算_controller应该滚动的偏移量
     double offset = _controller.offset - rlOffset;
-    _controller.jumpTo(offset);
+    _controller.animateTo(offset,
+        duration: Duration(milliseconds: 200), curve: Curves.linear);
   }
 
   @override
