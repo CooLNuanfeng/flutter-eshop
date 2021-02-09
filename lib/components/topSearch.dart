@@ -10,7 +10,7 @@ class TopSearch extends StatelessWidget {
 
   Widget build(BuildContext context) {
     final statusHeight = MediaQuery.of(context).padding.top;
-    print(this.type);
+    // print(this.type);
     // TODO: implement build
     switch (this.type) {
       case 1:

@@ -17,21 +17,21 @@ import 'components/nearShop.dart';
 import 'components/couponList.dart';
 import 'components/flexArea.dart';
 import 'components/btmCategory.dart';
-import 'components/fixedItemNav.dart';
+import 'components/fixNav.dart';
 
 class App extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _AppState();
 }
 
-class _AppState extends State<App> with SingleTickerProviderStateMixin {
+class _AppState extends State<App> {
   //底部nav globalkey
   GlobalKey key;
   List<GlobalKey> fixedKeys = [];
   StreamSubscription subscription;
 
   ScrollController _scrollController;
-  ScrollController _fixedNavController;
+  // ScrollController _fixedNavController;
 
   int _curIndex = 0; //当前tab index
   double bgRadiusTop = 0; //半圆弧形的top
@@ -44,15 +44,18 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
       {"productCateId": 2725, "name": "洗衣机", "tag": "守护洁净"},
       {"productCateId": 2723, "name": "冰箱", "tag": "原味鲜活"},
       {"productCateId": 2743, "name": "彩电", "tag": "视听万象"},
-      {"productCateId": 2741, "name": "热水器", "tag": "温暖到家"},
+      {"productCateId": 2741, "name": "热水器", "tag": "温暖到家"}
+    ]
+  }''');
+
+  /*
       {"productCateId": 2742, "name": "厨房电器", "tag": "乐享美味"},
       {"productCateId": 2726, "name": "冷柜", "tag": "冻力强劲"},
       {"productCateId": 2973, "name": "智能产品", "tag": "科技体验"},
       {"productCateId": 4255, "name": "生活电器", "tag": "品质生活"},
       {"productCateId": 2774, "name": "水家电", "tag": "洁净用水"},
       {"productCateId": 2811, "name": "家用中央空调", "tag": "舒适陪伴"}
-    ]
-  }''');
+  */
 
   @override
   void initState() {
@@ -65,7 +68,7 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
           debugLabel:
               'fixednav_' + tabsData['tab'][i]['productCateId'].toString()));
     }
-    _fixedNavController = ScrollController();
+    // _fixedNavController = ScrollController();
     _scrollController = ScrollController();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
@@ -73,7 +76,7 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
         print('滑动到了最底部');
       }
       setState(() {
-        print(bgRadiusTop);
+        // print(bgRadiusTop);
         if (_scrollController.offset > 0) {
           bgRadiusTop = -_scrollController.offset;
         } else {
@@ -84,12 +87,12 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
       RenderBox box = key.currentContext.findRenderObject();
       Offset os = box.localToGlobal(Offset.zero);
       if (os.dy < statusHeight) {
-        // print('======fixed======');
+        // print('======fixed====== app fixed nav');
         setState(() {
           fixedNav = true;
         });
       } else {
-        // print('======cancel fixed======');
+        // print('======cancel fixed====== btmcategory nav');
         setState(() {
           fixedNav = false;
         });
@@ -133,10 +136,9 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                   bottom: 0,
                   child: Container(
                     decoration: BoxDecoration(
-                        color: Colors.blue,
                         image: DecorationImage(
                             fit: BoxFit.fitWidth,
-                            alignment: Alignment.topCenter,
+                            alignment: Alignment(0, -1.2),
                             image: NetworkImage(
                                 'http://cdn50.ehaier.com/mobile-cms-admin/uploadimagecontroller/image/2021/01/6898342ced754d2d82727f6eb87db8ce.jpg'))),
                   ),
@@ -185,35 +187,12 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                   ),
                 ),
                 fixedNav
-                    ? Positioned(
-                        top: 50 + statusHeight,
-                        left: 0,
-                        right: 0,
-                        height: 45,
-                        child: Container(
-                          height: ScreenUtil().setHeight(45),
-                          color: Colors.white,
-                          child: ListView.builder(
-                            // physics: ClampingScrollPhysics(),
-                            controller: _fixedNavController,
-                            scrollDirection: Axis.horizontal,
-                            itemCount: tabsData['tab'].length,
-                            itemBuilder: (context, pos) {
-                              return InkWell(
-                                onTap: () async {
-                                  itemNavClick(pos);
-                                },
-                                child: FixedNavItem(
-                                  fkey: fixedKeys[pos],
-                                  name: tabsData['tab'][pos]['name'],
-                                  index: pos,
-                                  curIndex: _curIndex,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      )
+                    ? FixNav(
+                        statusHeight: statusHeight,
+                        tabData: tabsData['tab'],
+                        // fixedNavController: _fixedNavController,
+                        fixedKeys: fixedKeys,
+                        curIndex: _curIndex)
                     : Positioned(child: Container()),
               ],
             ),
@@ -223,43 +202,44 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
     });
   }
 
-  itemNavClick(pos) {
-    setState(() {
-      _curIndex = pos;
-    });
-    scrollItemToCenter(_curIndex);
-  }
+  // itemNavClick(pos) {
+  //   setState(() {
+  //     _curIndex = pos;
+  //   });
+  //   scrollItemToCenter(_curIndex);
+  // }
 
-  void scrollItemToCenter(pos) {
-    print('scrollItemToCenter');
-    //获取item的尺寸和位置
-    RenderBox box = fixedKeys[pos].currentContext.findRenderObject();
-    Offset os = box.localToGlobal(Offset.zero);
+  // void scrollItemToCenter(pos) {
+  //   print('scrollItemToCenter');
+  //   //获取item的尺寸和位置
+  //   RenderBox box = fixedKeys[pos].currentContext.findRenderObject();
+  //   Offset os = box.localToGlobal(Offset.zero);
 
-    //double h=box.size.height;
-    double w = box.size.width;
-    double x = os.dx;
-    //double y=os.dy;
+  //   //double h=box.size.height;
+  //   double w = box.size.width;
+  //   double x = os.dx;
+  //   //double y=os.dy;
 
-    //获取屏幕宽高
-    double windowW = MediaQuery.of(context).size.width;
-    //double windowH=MediaQuery.of(context).size.height;
+  //   //获取屏幕宽高
+  //   double windowW = MediaQuery.of(context).size.width;
+  //   //double windowH=MediaQuery.of(context).size.height;
 
-    //就算当前item距离屏幕中央的相对偏移量
-    double rlOffset = windowW / 2 - (x + w / 2);
+  //   //就算当前item距离屏幕中央的相对偏移量
+  //   double rlOffset = windowW / 2 - (x + w / 2);
 
-    //计算_controller应该滚动的偏移量
-    double offset = _fixedNavController.offset - rlOffset;
-    print(offset);
-    _fixedNavController.jumpTo(offset);
-  }
+  //   //计算_controller应该滚动的偏移量
+  //   double offset = _fixedNavController.offset - rlOffset;
+  //   print(offset);
+  //   _fixedNavController.animateTo(offset,
+  //       duration: Duration(milliseconds: 200), curve: Curves.linear);
+  // }
 
   @override
   void dispose() {
     super.dispose();
     subscription.cancel(); //State销毁时，清理注册
     _scrollController.dispose();
-    _fixedNavController.dispose();
+    // _fixedNavController.dispose();
   }
 }
 
@@ -268,28 +248,43 @@ class Body extends StatelessWidget {
   final tabNav;
   final curIndex;
   Body({Key key, this.btmNavKey, this.tabNav, this.curIndex}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Swiper(swiperItems: [
-          'https://cdn50.ehaier.com/mobilemall-admin-web/bannercontroller/image/2021/01/8ab60d2d17224bc793a8eb58fec765c5.jpg',
-          'https://cdn50.ehaier.com/mobilemall-admin-web/bannercontroller/image/2021/01/0aa5720f475148ab90d34247b41dc2be.jpg',
-          'https://cdn50.ehaier.com/mobilemall-admin-web/bannercontroller/image/2021/01/60f434e5e10d4011b4276840beacba1b.jpg'
-        ]),
-        Category(),
-        MiddleBannerWidget(),
-        KingAreaWidget(),
-        VipStoreWidget(),
-        NearShop(),
-        CouponList(),
-        FlexArea(),
-        BtmCategory(
-          curIndex: curIndex,
-          btmCatekey: btmNavKey,
-          tabNav: tabNav,
-        ),
-      ],
+    return Container(
+      child: Column(
+        children: [
+          Swiper(swiperItems: [
+            'https://cdn50.ehaier.com/mobilemall-admin-web/bannercontroller/image/2021/01/8ab60d2d17224bc793a8eb58fec765c5.jpg',
+            'https://cdn50.ehaier.com/mobilemall-admin-web/bannercontroller/image/2021/01/0aa5720f475148ab90d34247b41dc2be.jpg',
+            'https://cdn50.ehaier.com/mobilemall-admin-web/bannercontroller/image/2021/01/60f434e5e10d4011b4276840beacba1b.jpg'
+          ]),
+          Category(),
+          MiddleBannerWidget(),
+          KingAreaWidget(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  colors: [Colors.red, Colors.cyan],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter),
+            ),
+            child: Column(
+              children: [
+                VipStoreWidget(),
+                NearShop(),
+                CouponList(),
+                FlexArea(),
+                BtmCategory(
+                  curIndex: curIndex,
+                  btmCatekey: btmNavKey,
+                  tabNav: tabNav,
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }

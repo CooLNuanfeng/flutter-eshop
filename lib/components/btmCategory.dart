@@ -58,7 +58,7 @@ class TabListNav extends StatefulWidget {
   }
 }
 
-class _TabListNavState extends State<TabListNav> {
+class _TabListNavState extends State<TabListNav> with WidgetsBindingObserver {
   List<GlobalKey> keys = <GlobalKey>[];
   ScrollController _controller = ScrollController();
   StreamSubscription subscription;
@@ -75,30 +75,33 @@ class _TabListNavState extends State<TabListNav> {
       curItem = pos;
     });
     scrollItemToCenter(pos);
-    EventUtil.fire(CustomEvent('nav', pos));
+    // EventUtil.fire(CustomEvent('nav', pos));
   }
 
   //滚动Item到指定位置，这里滚动到屏幕正中间
   void scrollItemToCenter(int pos) {
-    //获取item的尺寸和位置
-    RenderBox box = keys[pos].currentContext.findRenderObject();
-    Offset os = box.localToGlobal(Offset.zero);
+    if (keys[pos] != null) {
+      //获取item的尺寸和位置
+      RenderBox box = keys[pos].currentContext.findRenderObject();
+      Offset os = box.localToGlobal(Offset.zero);
 
-    //double h=box.size.height;
-    double w = box.size.width;
-    double x = os.dx;
-    //double y=os.dy;
+      //double h=box.size.height;
+      double w = box.size.width;
+      double x = os.dx;
+      //double y=os.dy;
 
-    //获取屏幕宽高
-    double windowW = MediaQuery.of(context).size.width;
-    //double windowH=MediaQuery.of(context).size.height;
+      //获取屏幕宽高
+      double windowW = MediaQuery.of(context).size.width;
+      //double windowH=MediaQuery.of(context).size.height;
 
-    //就算当前item距离屏幕中央的相对偏移量
-    double rlOffset = windowW / 2 - (x + w / 2);
+      //就算当前item距离屏幕中央的相对偏移量
+      double rlOffset = windowW / 2 - (x + w / 2);
 
-    //计算_controller应该滚动的偏移量
-    double offset = _controller.offset - rlOffset;
-    _controller.jumpTo(offset);
+      //计算_controller应该滚动的偏移量
+      double offset = _controller.offset - rlOffset;
+      _controller.animateTo(offset,
+          duration: Duration(milliseconds: 200), curve: Curves.linear);
+    }
   }
 
   @override
@@ -111,6 +114,11 @@ class _TabListNavState extends State<TabListNav> {
           debugLabel:
               'tabnav_' + widget.tabNav[i]['productCateId'].toString()));
     }
+
+    WidgetsBinding.instance.addObserver(this); //注册监听器
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("单次Frame绘制回调"); //只回调一次
+    });
 
     //监听子组件事件
     subscription = EventUtil.on<CustomEvent>((event) {

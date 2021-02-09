@@ -100,7 +100,7 @@ class _RefreshHeaderState extends State<RefreshHeaderWidget> {
   @override
   Widget build(BuildContext context) {
     if (_refreshState == RefreshMode.drag) {
-      print('start');
+      // print('start');
       setState(() {
         status = '下拉刷新';
         animated = true;
