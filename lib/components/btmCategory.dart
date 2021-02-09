@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:async';
+import '../common/eventUtil.dart';
 
 class BtmCategory extends StatefulWidget {
   GlobalKey btmCatekey;
   List tabNav;
-  BtmCategory({Key key, this.btmCatekey, this.tabNav}) : super(key: key);
+  int curIndex;
+  BtmCategory({Key key, this.btmCatekey, this.tabNav, this.curIndex})
+      : super(key: key);
   @override
   State<StatefulWidget> createState() {
     return _BtmCategoryState();
@@ -27,10 +31,11 @@ class _BtmCategoryState extends State<BtmCategory> {
       child: Column(
         children: [
           TabListNav(
+            curIndex: widget.curIndex,
             tabNav: widget.tabNav,
           ),
           Container(
-            height: ScreenUtil().setHeight(1200),
+            height: ScreenUtil().setHeight(700),
             color: Colors.blue,
             child: Center(
               child: Text('center'),
@@ -44,7 +49,8 @@ class _BtmCategoryState extends State<BtmCategory> {
 
 class TabListNav extends StatefulWidget {
   final tabNav;
-  TabListNav({Key key, this.tabNav}) : super(key: key);
+  int curIndex;
+  TabListNav({Key key, this.tabNav, this.curIndex}) : super(key: key);
   @override
   State<StatefulWidget> createState() {
     // TODO: implement createState
@@ -55,18 +61,21 @@ class TabListNav extends StatefulWidget {
 class _TabListNavState extends State<TabListNav> {
   List<GlobalKey> keys = <GlobalKey>[];
   ScrollController _controller = ScrollController();
+  StreamSubscription subscription;
+
   void Function(void Function(int)) setCall;
 
-  int curItem = 0;
+  int curItem;
 
   int tabLength;
 
   void itemClick(pos) {
-    print(pos);
+    // print(pos);
     setState(() {
       curItem = pos;
     });
     scrollItemToCenter(pos);
+    EventUtil.fire(CustomEvent('nav', pos));
   }
 
   //滚动Item到指定位置，这里滚动到屏幕正中间
@@ -89,19 +98,34 @@ class _TabListNavState extends State<TabListNav> {
 
     //计算_controller应该滚动的偏移量
     double offset = _controller.offset - rlOffset;
-    _controller.animateTo(offset,
-        duration: Duration(milliseconds: 200), curve: Curves.easeInOut);
+    _controller.jumpTo(offset);
   }
 
   @override
   void initState() {
     super.initState();
+    curItem = widget.curIndex;
     tabLength = widget.tabNav?.length;
     for (int i = 0; i < tabLength; i++) {
       keys.add(GlobalKey(
           debugLabel:
               'tabnav_' + widget.tabNav[i]['productCateId'].toString()));
     }
+
+    //监听子组件事件
+    subscription = EventUtil.on<CustomEvent>((event) {
+      print('+++++++++');
+      print(event.name);
+      scrollItemToCenter(event.value);
+    });
+  }
+
+  @override
+  void didUpdateWidget(TabListNav oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    setState(() {
+      curItem = widget.curIndex;
+    });
   }
 
   Widget tabItem(context, pos) {
@@ -158,6 +182,7 @@ class _TabListNavState extends State<TabListNav> {
       ),
       height: ScreenUtil().setHeight(50),
       child: ListView.builder(
+        // physics: ClampingScrollPhysics(),
         controller: _controller,
         scrollDirection: Axis.horizontal,
         itemCount: tabLength,
@@ -171,5 +196,11 @@ class _TabListNavState extends State<TabListNav> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    subscription.cancel(); //State销毁时，清理注册
   }
 }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_easyrefresh/easy_refresh.dart';
 import 'dart:convert';
+import 'dart:async';
+
+import 'common/eventUtil.dart';
 
 import 'components/refreshHeader.dart';
 import 'components/topSearch.dart';
@@ -14,6 +17,7 @@ import 'components/nearShop.dart';
 import 'components/couponList.dart';
 import 'components/flexArea.dart';
 import 'components/btmCategory.dart';
+import 'components/fixedItemNav.dart';
 
 class App extends StatefulWidget {
   @override
@@ -23,12 +27,16 @@ class App extends StatefulWidget {
 class _AppState extends State<App> with SingleTickerProviderStateMixin {
   //底部nav globalkey
   GlobalKey key;
+  List<GlobalKey> fixedKeys = [];
+  StreamSubscription subscription;
 
   ScrollController _scrollController;
+  ScrollController _fixedNavController;
 
-  double bgRadiusTop = 0;
-  double statusHeight;
-  bool fixedNav = false;
+  int _curIndex = 0; //当前tab index
+  double bgRadiusTop = 0; //半圆弧形的top
+  double statusHeight; //适配 状态栏高度
+  bool fixedNav = false; //是否fixed
 
   final tabsData = jsonDecode('''{
     "tab": [
@@ -49,10 +57,15 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    key = GlobalKey(debugLabel: 'btmNav');
-    print('====key=====');
-    print(key);
-    print('====key=====');
+    key = GlobalKey(debugLabel: 'btmNav'); //吸顶key
+
+    //吸顶tab item key
+    for (int i = 0; i < tabsData['tab'].length; i++) {
+      fixedKeys.add(GlobalKey(
+          debugLabel:
+              'fixednav_' + tabsData['tab'][i]['productCateId'].toString()));
+    }
+    _fixedNavController = ScrollController();
     _scrollController = ScrollController();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
@@ -67,14 +80,30 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
           bgRadiusTop = 0;
         }
       });
-
+      //吸顶
       RenderBox box = key.currentContext.findRenderObject();
       Offset os = box.localToGlobal(Offset.zero);
       if (os.dy < statusHeight) {
-        print('======fixed======');
+        // print('======fixed======');
+        setState(() {
+          fixedNav = true;
+        });
       } else {
-        print('======cancel fixed======');
+        // print('======cancel fixed======');
+        setState(() {
+          fixedNav = false;
+        });
+        // EventUtil.fire(CustomEvent('navscroll', _curIndex));
       }
+    });
+
+    //监听子组件事件
+    subscription = EventUtil.on<CustomEvent>((event) {
+      print(event.name);
+      print(event.value);
+      setState(() {
+        _curIndex = event.value;
+      });
     });
   }
 
@@ -139,6 +168,7 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                       children: [
                         Body(
                           btmNavKey: key,
+                          curIndex: _curIndex,
                           tabNav: tabsData['tab'],
                         ),
                       ],
@@ -160,7 +190,29 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
                         left: 0,
                         right: 0,
                         height: 45,
-                        child: Container(),
+                        child: Container(
+                          height: ScreenUtil().setHeight(45),
+                          color: Colors.white,
+                          child: ListView.builder(
+                            // physics: ClampingScrollPhysics(),
+                            controller: _fixedNavController,
+                            scrollDirection: Axis.horizontal,
+                            itemCount: tabsData['tab'].length,
+                            itemBuilder: (context, pos) {
+                              return InkWell(
+                                onTap: () async {
+                                  itemNavClick(pos);
+                                },
+                                child: FixedNavItem(
+                                  fkey: fixedKeys[pos],
+                                  name: tabsData['tab'][pos]['name'],
+                                  index: pos,
+                                  curIndex: _curIndex,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       )
                     : Positioned(child: Container()),
               ],
@@ -171,17 +223,51 @@ class _AppState extends State<App> with SingleTickerProviderStateMixin {
     });
   }
 
+  itemNavClick(pos) {
+    setState(() {
+      _curIndex = pos;
+    });
+    scrollItemToCenter(_curIndex);
+  }
+
+  void scrollItemToCenter(pos) {
+    print('scrollItemToCenter');
+    //获取item的尺寸和位置
+    RenderBox box = fixedKeys[pos].currentContext.findRenderObject();
+    Offset os = box.localToGlobal(Offset.zero);
+
+    //double h=box.size.height;
+    double w = box.size.width;
+    double x = os.dx;
+    //double y=os.dy;
+
+    //获取屏幕宽高
+    double windowW = MediaQuery.of(context).size.width;
+    //double windowH=MediaQuery.of(context).size.height;
+
+    //就算当前item距离屏幕中央的相对偏移量
+    double rlOffset = windowW / 2 - (x + w / 2);
+
+    //计算_controller应该滚动的偏移量
+    double offset = _fixedNavController.offset - rlOffset;
+    print(offset);
+    _fixedNavController.jumpTo(offset);
+  }
+
   @override
   void dispose() {
     super.dispose();
+    subscription.cancel(); //State销毁时，清理注册
     _scrollController.dispose();
+    _fixedNavController.dispose();
   }
 }
 
 class Body extends StatelessWidget {
   final btmNavKey;
   final tabNav;
-  Body({Key key, this.btmNavKey, this.tabNav}) : super(key: key);
+  final curIndex;
+  Body({Key key, this.btmNavKey, this.tabNav, this.curIndex}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -199,6 +285,7 @@ class Body extends StatelessWidget {
         CouponList(),
         FlexArea(),
         BtmCategory(
+          curIndex: curIndex,
           btmCatekey: btmNavKey,
           tabNav: tabNav,
         ),
